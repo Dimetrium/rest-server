@@ -16,22 +16,28 @@ $app->get( '/api/cars', function () {
   echo json_encode( $data );
 } );
 
-//Searches for cars with $brand
+//Searches for cars 
 $app->get( '/api/cars/search/{year}', function ($year ) use ($app) {
 
-  $model = $app['request']->getQuery('model', 'string');
-  $brand = $app['request']->getQuery('brand', 'string');
-  $color = $app['request']->getQuery('color', 'string');
-  $volume = $app['request']->getQuery('volume', 'float');
-  $speed = $app['request']->getQuery('speed', 'int');
-  $price = $app['request']->getQuery('price', 'float');
-//  var_dump($year);
-//  var_dump($model);
-//  var_dump($brand);
-//  exit;
-  $conditions = 'year LIKE :year: ORDER BY year';
-  $parameters =  ['year' => $year];
-  $cars = Cars::find([$conditions, "bind" => $parameters]);
+  $model = $app['request']->getQuery('model', 'string') ?: '%';
+  $brand = $app['request']->getQuery('brand', 'string') ?: '%';
+  $color = $app['request']->getQuery('color', 'string') ?: '%';
+  $volume = $app['request']->getQuery('volume', 'float') ?: '%';
+  $speed = $app['request']->getQuery('speed', 'int') ?: '%';
+  $price = $app['request']->getQuery('price', 'float') ?: '%';
+
+  $phql = "SELECT * FROM Cars WHERE id = :id:";
+  $cars = $app->modelsManager->createBuilder()
+    ->from('Cars')
+    ->where('year = :year:', ['year' => $year])
+    ->andWhere('model LIKE :model:', ['model' => $model])
+    ->andWhere('brand LIKE :brand:', ['brand' => $brand])
+    ->andWhere('color LIKE :color:', ['color' => $color])
+    ->andWhere('volume LIKE :volume:', ['volume' => $volume])
+    ->andWhere('speed LIKE :speed:', ['speed' => $speed])
+    ->andWhere('price LIKE :price:', ['price' => $price])
+    ->getQuery()
+    ->execute();
 
   $data = [];
 
@@ -47,8 +53,10 @@ $app->get( '/api/cars/search/{year}', function ($year ) use ($app) {
 } );
 
 //Retrieves cars based on primary key
-$app->get( '/api/cars/{id:[0-9]+}{type:.(.*)}', function ( $id, $type ) use ( $app ) {
-
+//TODO: parse parameters (JSON/XML etc.)
+$app->get( '/api/cars/{id:[0-9]+}{type:.(.*)}', function ( $id, $type=null ) use ( $app ) {
+  var_dump($id);
+  exit;
   $phql = "SELECT * FROM Cars WHERE id = :id:";
   $cars = $app->modelsManager->executeQuery($phql, ['id' => $id])->getFirst();
 
@@ -59,14 +67,14 @@ $app->get( '/api/cars/{id:[0-9]+}{type:.(.*)}', function ( $id, $type ) use ( $a
     $response->setJsonContent( [
       'status' => 'FOUND',
       'data' => [
-      'model' => $cars->getModel(), 
-      'year' => $cars->getYear(), 
-      'volume' => $cars->getVolume(), 
-      'color' => $cars->getColor(), 
-      'speed' => $cars->getSpeed(), 
-      'price' => $cars->getPrice()
-      ]
-      ]
+                'model' => $cars->getModel(), 
+                'year' => $cars->getYear(), 
+                'volume' => $cars->getVolume(), 
+                'color' => $cars->getColor(), 
+                'speed' => $cars->getSpeed(), 
+                'price' => $cars->getPrice()
+                ]
+        ]
     );
   }
 
