@@ -212,5 +212,4 @@ $app->delete( '/api/cars/{id:[0-9]+}', function ( $id ) use ( $app ) {
  */
 $app->notFound( function () use ( $app ) {
   $app->response->setStatusCode( 404, "Not Found" )->sendHeaders();
-  echo $app[ 'view' ]->render( '404' );
 } );
