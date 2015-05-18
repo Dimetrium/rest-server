@@ -65,7 +65,7 @@ $app->get( '/api/cars/search/{year}', function ($year ) use ($app) {
 
 //Retrieves cars based on primary key
 //TODO: parse parameters (JSON/XML etc.)
-$app->get( '/api/cars/{id:([0-9]+)+(\.(json|xml|txt|html))}', function ( $id ) use ( $app ) {
+$app->get( '/api/cars/{id:(([0-9]+)+(\.(json|xml|txt|html))?)}', function ( $id ) use ( $app ) {
   var_dump($id);
   exit;
   $phql = "SELECT * FROM Cars WHERE id = :id:";
