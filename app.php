@@ -1,20 +1,31 @@
 <?php
 //Retrieves all cars
-$app->get( '/api/cars', function () {
-
+$app->get( '/api/cars', function () 
+{
   $cars = Cars::find();
 
   $data = [];
-
-  foreach ( $cars as $car ) {
+  
+  foreach ( $cars as $car ) 
+  {
     $data[ ] = [
-      'id' => $car->getId(),
-        'brand' => $car->getBrand(),
-        'model' => $car->getModel()
-        ];
+              'id' => $car->getId(),
+              'brand' => $car->getBrand(),
+              'model' => $car->getModel()
+              ];
   }
-  echo json_encode( $data );
-} );
+  //echo json_encode( $data );
+  if($data)
+  {
+      $app->response->setRawHeader("HTTP/1.1 200 OK"); 
+      $app->response->setJsonContent($arrayResponse);
+      $app->response->send();
+  }
+  else
+  {
+      $app->response->setStatusCode(415, "Nothing has found")->sendHeaders();
+  }
+});
 
 //Searches for cars 
 $app->get( '/api/cars/search/{year}', function ($year ) use ($app) {
@@ -54,7 +65,7 @@ $app->get( '/api/cars/search/{year}', function ($year ) use ($app) {
 
 //Retrieves cars based on primary key
 //TODO: parse parameters (JSON/XML etc.)
-$app->get( '/api/cars/{id}', function ( $id ) use ( $app ) {
+$app->get( '/api/cars/{id:([0-9]+)+(\.(json|xml|txt|html))}', function ( $id ) use ( $app ) {
   var_dump($id);
   exit;
   $phql = "SELECT * FROM Cars WHERE id = :id:";
