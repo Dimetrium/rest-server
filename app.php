@@ -5,54 +5,42 @@ $app->get( '/api/cars', function ()
   $cars = Cars::find();
 
   $data = [];
-  
+
   foreach ( $cars as $car ) 
   {
     $data[ ] = [
-              'id' => $car->getId(),
-              'brand' => $car->getBrand(),
-              'model' => $car->getModel()
-              ];
+      'id' => $car->getId(),
+        'brand' => $car->getBrand(),
+        'model' => $car->getModel()
+        ];
   }
-  //echo json_encode( $data );
   if($data)
   {
-      $app->response->setRawHeader("HTTP/1.1 200 OK"); 
-      $app->response->setJsonContent($arrayResponse);
-      $app->response->send();
+    $app->response->setRawHeader("HTTP/1.1 200 OK"); 
+    $app->response->setJsonContent($arrayResponse);
+    $app->response->send();
   }
   else
   {
-      $app->response->setStatusCode(415, "Nothing has found")->sendHeaders();
+    $app->response->setStatusCode(415, "Oops, Sorry no data found")->sendHeaders();
   }
 });
 
 //Searches for cars 
 $app->get( '/api/cars/search/{year}', function ($year ) use ($app) {
-
-  $model = $app['request']->getQuery('model', 'string') ?: '%';
-  $brand = $app['request']->getQuery('brand', 'string') ?: '%';
-  $color = $app['request']->getQuery('color', 'string') ?: '%';
-  $volume = $app['request']->getQuery('volume', 'float') ?: '%';
-  $speed = $app['request']->getQuery('speed', 'int') ?: '%';
-  $price = $app['request']->getQuery('price', 'float') ?: '%';
-
-  $phql = "SELECT * FROM Cars WHERE id = :id:";
-  $cars = $app->modelsManager->createBuilder()
-    ->from('Cars')
-    ->where('year = :year:', ['year' => $year])
-    ->andWhere('model LIKE :model:', ['model' => $model])
-    ->andWhere('brand LIKE :brand:', ['brand' => $brand])
-    ->andWhere('color LIKE :color:', ['color' => $color])
-    ->andWhere('volume LIKE :volume:', ['volume' => $volume])
-    ->andWhere('speed LIKE :speed:', ['speed' => $speed])
-    ->andWhere('price LIKE :price:', ['price' => $price])
-    ->getQuery()
-    ->execute();
-
+  if('' !== $year)
+  {
+    $cars = new Cars();
+    $cars = $cars->parseQuery($app, $year);
+  }
+  else
+  {
+    $app->response->setStatusCode(415, "Year field can not be empty")->sendHeaders();
+  }
   $data = [];
 
-  foreach ( $cars as $car ) {
+  foreach ( $cars as $car ) 
+  {
     $data[ ] = [
       'id' => $car->getId(),
         'brand' => $car->getBrand(),
@@ -60,36 +48,72 @@ $app->get( '/api/cars/search/{year}', function ($year ) use ($app) {
         'year' => $car->getYear()
         ];
   }
-  echo json_encode( $data );
-} );
+
+  if ( null == $data )
+  {
+    $app->response->setStatusCode(415, "Oops, Sorry no data found")->sendHeaders();
+  }
+  else
+  {
+    $app->response->setJsonContent($data);
+    return $app->response;
+  }
+});
 
 //Retrieves cars based on primary key
-//TODO: parse parameters (JSON/XML etc.)
 $app->get( '/api/cars/{id:(([0-9]+)+(\.(json|xml|txt|html))?)}', function ( $id ) use ( $app ) {
-  var_dump($id);
-  exit;
-  $phql = "SELECT * FROM Cars WHERE id = :id:";
-  $cars = $app->modelsManager->executeQuery($phql, ['id' => $id])->getFirst();
+  $data = explode('.', $id);
 
-  $response = new Phalcon\Http\Response();
-  if ( false == $cars ) {
-    $response->setJsonContent( [ 'status' => 'NOT-FOUND' ] );
-  } else {
-    $response->setJsonContent( [
-      'status' => 'FOUND',
-      'data' => [
-                'model' => $cars->getModel(), 
-                'year' => $cars->getYear(), 
-                'volume' => $cars->getVolume(), 
-                'color' => $cars->getColor(), 
-                'speed' => $cars->getSpeed(), 
-                'price' => $cars->getPrice()
-                ]
-        ]
-    );
+  $phql = "SELECT * FROM Cars WHERE id = :id:";
+
+  $cars = $app->modelsManager->executeQuery($phql, ['id' => $data[0]])->getFirst();
+
+  $cars = [
+        'model' => $cars->getModel(), 
+        'year' => $cars->getYear(), 
+        'volume' => $cars->getVolume(), 
+        'color' => $cars->getColor(), 
+        'speed' => $cars->getSpeed(), 
+        'price' => $cars->getPrice()
+    ];
+
+  if ( false == $cars ) 
+  {
+    $app->response->setStatusCode(415, "Oops, Sorry no data found")->sendHeaders();
+  } 
+  else 
+  {
+    var_dump($data[1]);
+
+    exit;
+    switch ($data[1])
+    {
+    case 'xml':
+      $xml = '<root><carDetail>';
+      foreach($cars as $key => $val)
+      {
+        $xml .= "<$key>$val</$key>";
+      }
+      $xml .= '</carDetail></root>';
+      $app->response->setHeader('Content-Type', 'application/xml');
+      $app->response->setContent($xml);
+      break;
+    case 'json':
+      $app->response->setJsonContent( [
+        'status' => 'FOUND',
+        'data' => $cars 
+      ] 
+      );
+    default:
+      $app->response->setJsonContent( [
+        'status' => 'FOUND',
+        'data' => $cars 
+      ] 
+      );
+    }
   }
 
-  return $response;
+  return $app->response;
 } );
 
 //Adds a new cars
