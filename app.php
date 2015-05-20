@@ -83,10 +83,9 @@ $app->get( '/api/cars/{id:(([0-9]+)+(\.(json|xml|txt|html))?)}', function ( $id 
   } 
   else 
   {
-    var_dump($data[1]);
+    array_key_exists('1', $data)? $type = $data[1] : $type = 'json';
 
-    exit;
-    switch ($data[1])
+    switch ($type)
     {
     case 'xml':
       $xml = '<root><carDetail>';
