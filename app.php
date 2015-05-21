@@ -1,6 +1,6 @@
 <?php
 //Retrieves all cars
-$app->get( '/api/cars', function () 
+$app->get( '/api/cars', function () use ($app)
 {
   $cars = Cars::find();
 
@@ -17,7 +17,7 @@ $app->get( '/api/cars', function ()
   if($data)
   {
     $app->response->setRawHeader("HTTP/1.1 200 OK"); 
-    $app->response->setJsonContent($arrayResponse);
+    $app->response->setJsonContent($data);
     $app->response->send();
   }
   else

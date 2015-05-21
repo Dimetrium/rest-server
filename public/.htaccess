@@ -1,5 +1,5 @@
 AddDefaultCharset UTF-8
-RewriteBase /~user5/rest-server/
+#RewriteBase /~user5/rest-server/
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
