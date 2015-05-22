@@ -320,8 +320,9 @@ class Cars extends Model
       ->execute();
   }
 
-  public function typeHandler($app, $data, $type)
+  public function typeHandler($app, $data, $type = null)
   {
+      
     switch ($type)
     {
     case 'html':
