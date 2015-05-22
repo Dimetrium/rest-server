@@ -1,8 +1,13 @@
 <?php
 //Retrieves all cars
-$app->get( '/api/cars', function () use ($app)
+$app->get( '/api/{type:((cars)(\.(json|xml|txt|html))?)}', function ($type) use ($app)
 {
+  $type = str_replace('.','',$type);
   $cars = Cars::find();
+
+var_dump($type);
+exit;
+  $handler = new Cars();
 
   $data = [];
 
@@ -14,16 +19,8 @@ $app->get( '/api/cars', function () use ($app)
         'model' => $car->getModel()
         ];
   }
-  if($data)
-  {
-    $app->response->setRawHeader("HTTP/1.1 200 OK"); 
-    $app->response->setJsonContent($data);
-    $app->response->send();
-  }
-  else
-  {
-    $app->response->setStatusCode(415, "Oops, Sorry no data found")->sendHeaders();
-  }
+  $app->response->setRawHeader("HTTP/1.1 200 OK"); 
+  return $handler->typeHandler($app, $data, $type);
 });
 
 //Searches for cars 
@@ -67,16 +64,15 @@ $app->get( '/api/cars/{id:(([0-9]+)+(\.(json|xml|txt|html))?)}', function ( $id 
   $phql = "SELECT * FROM Cars WHERE id = :id:";
 
   $cars = $app->modelsManager->executeQuery($phql, ['id' => $data[0]])->getFirst();
-
-  $cars = [
-        'model' => $cars->getModel(), 
-        'year' => $cars->getYear(), 
-        'volume' => $cars->getVolume(), 
-        'color' => $cars->getColor(), 
-        'speed' => $cars->getSpeed(), 
-        'price' => $cars->getPrice()
-    ];
-
+  $cars = [ 0 => (array)$cars = [
+    'model' => $cars->getModel(), 
+    'year' => $cars->getYear(), 
+    'volume' => $cars->getVolume(), 
+    'color' => $cars->getColor(), 
+    'speed' => $cars->getSpeed(), 
+    'price' => $cars->getPrice()
+    ]];
+  $handler = new Cars();
   if ( false == $cars ) 
   {
     $app->response->setStatusCode(415, "Oops, Sorry no data found")->sendHeaders();
@@ -84,36 +80,9 @@ $app->get( '/api/cars/{id:(([0-9]+)+(\.(json|xml|txt|html))?)}', function ( $id 
   else 
   {
     array_key_exists('1', $data)? $type = $data[1] : $type = 'json';
-
-    switch ($type)
-    {
-    case 'xml':
-      $xml = '<root><carDetail>';
-      foreach($cars as $key => $val)
-      {
-        $xml .= "<$key>$val</$key>";
-      }
-      $xml .= '</carDetail></root>';
-      $app->response->setHeader('Content-Type', 'application/xml');
-      $app->response->setContent($xml);
-      break;
-    case 'json':
-      $app->response->setJsonContent( [
-        'status' => 'FOUND',
-        'data' => $cars 
-      ] 
-      );
-    default:
-      $app->response->setJsonContent( [
-        'status' => 'FOUND',
-        'data' => $cars 
-      ] 
-      );
-    }
+    return $handler->typeHandler($app, $cars, $type);
   }
-
-  return $app->response;
-} );
+});
 
 //Adds a new cars
 $app->post( '/api/cars', function () use ( $app ) {
