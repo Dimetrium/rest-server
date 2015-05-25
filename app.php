@@ -120,9 +120,18 @@ $app->post('/api/order', function () use ( $app ) {
 });
 
 //Add new user
-$app->post('/api/registration', function () use ( $app ) {
-
-    $car = $app->request->getJsonRawBody();
+$app->post('/api/registration', function () use ( $app ) 
+{
+    $users = new Users;
+    
+    if ($request->isPost() == true) 
+    {
+        $users->setLogin($app->request->getPost('login', 'alphanum'));
+        $users->setEmail($app->request->getPost('email', 'email'));
+        $users->setPassword($app->request->getPost('password', 'string'));
+        $users->save();
+        $users->registration();
+    }
 
     $phql = "INSERT INTO Users (id, year, color, speed, volume, price, model, brand)
     VALUES (:id:, :year:, :color:, :speed:, :volume:, :price:, :model:, :brand:)";
