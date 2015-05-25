@@ -194,33 +194,6 @@ class User extends \Phalcon\Mvc\Model
    * @return bool
    *
    */
-    public function registration ()
-    {
-        if ( isset( $this->login ) && isset( $this->password ) ) 
-        {
-            $this->password = md5( md5( trim( $this->password ) ) );
-        }
-        $query = <<<SQL
-                INSERT INTO
-                xyz_employee
-                SET employee_login = :employee_login,
-                employee_password = :employee_password,
-                role_id = :role_id,
-                employee_name = :employee_name,
-                employee_email = :employee_email;
-SQL;
-        $this->dbh->insertRow( $query, array(
-            'employee_login' => $login,
-            'employee_password' => $password,
-            'employee_name' => $name,
-            'employee_email' => $email,
-            'role_id' => $role_id ) );
-        $lastInsId = $this->dbh->lastInsertedId();
-        $this->dbh = null;
-        if ( null !== $lastInsId ) {
-            return true;
-        }
-        return false;
-    }
+
     
 }
