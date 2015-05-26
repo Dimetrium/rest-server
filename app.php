@@ -12,10 +12,10 @@ $app->get('/api/{type:((cars)(\.(json|xml|txt|html))?)}', function ($type) use (
   $data = [];
   foreach ($cars as $car) {
     $data[] = [
-        'id' => $car->getId(),
+      'id' => $car->getId(),
         'brand' => $car->getBrand(),
         'model' => $car->getModel()
-    ];
+        ];
   }
 
   return $handler->typeHandler($app, $data, $type);
@@ -33,11 +33,11 @@ $app->get('/api/cars/search/{year}', function ($year ) use ($app) {
 
   foreach ($cars as $car) {
     $data[] = [
-        'id' => $car->getId(),
+      'id' => $car->getId(),
         'brand' => $car->getBrand(),
         'color' => $car->getColor(),
         'year' => $car->getYear()
-    ];
+        ];
   }
 
   if (null == $data) {
@@ -56,13 +56,13 @@ $app->get('/api/cars/{id:(([0-9]+)+(\.(json|xml|txt|html))?)}', function ( $id )
 
   $cars = $app->modelsManager->executeQuery($phql, ['id' => $data[0]])->getFirst();
   $cars = [0 => (array) $cars = [
-  'model' => $cars->getModel(),
-  'year' => $cars->getYear(),
-  'volume' => $cars->getVolume(),
-  'color' => $cars->getColor(),
-  'speed' => $cars->getSpeed(),
-  'price' => $cars->getPrice()
-  ]];
+    'model' => $cars->getModel(),
+      'year' => $cars->getYear(),
+      'volume' => $cars->getVolume(),
+      'color' => $cars->getColor(),
+      'speed' => $cars->getSpeed(),
+      'price' => $cars->getPrice()
+      ]];
   $handler = new Cars();
   if (false == $cars) {
     $app->response->setStatusCode(415, "Oops, Sorry no data found")->sendHeaders();
@@ -81,15 +81,15 @@ $app->post('/api/order', function () use ( $app ) {
     VALUES (:id:, :year:, :color:, :speed:, :volume:, :price:, :model:, :brand:)";
 
   $status = $app->modelsManager->executeQuery($phql, [
-      'id' => '',
-      'year' => $car->year,
-      'color' => $car->color,
-      'speed' => $car->speed,
-      'volume' => $car->volume,
-      'price' => $car->price,
-      'model' => $car->model,
-      'brand' => $car->brand
-  ]);
+    'id' => '',
+    'year' => $car->year,
+    'color' => $car->color,
+    'speed' => $car->speed,
+    'volume' => $car->volume,
+    'price' => $car->price,
+    'model' => $car->model,
+    'brand' => $car->brand
+    ]);
 
   //Create a response
   $response = new Phalcon\Http\Response();
@@ -134,59 +134,45 @@ $app->post('/api/registration', function () use ( $app ) {
       $response->setStatusCode(201, "Created");
     } else {
       $response->setStatusCode(409, "Conflict");
-      $response->setJsonContent(array('status' => 'ERROR',
-          'messages' => 'Something wrong'));
+      $response->setJsonContent(
+        [
+          'status' => 'ERROR',
+          'messages' => 'Something wrong'
+        ]);
     }
   }
-
   return $response;
 });
 
 //Log In
-$app->put('/api/cars/{id:[0-9]+}', function ( $id ) use ( $app ) {
+$app->put('/api/cars/login', function ( ) use ( $app ) {
 
-  $car = $app->request->getJsonRawBody();
+  $users = Users::find(
+    [
+      "conditions" => "login = :login: and password = :password:",
+      "bind" => 
+            [
+              "login" => $app->request->getPost('login', 'alphanum'),
+              "password" => md5(md5(trim($app->request->getPost('password', 'string'))))
+            ],
+      "limit" => 1
+    ]);
 
-  $phql = "UPDATE Cars SET
-    year = :year:,
-    color = :color:,
-    speed = :speed:,
-    volume = :volume:,
-    price = :price:,
-    model = :model:,
-    brand = :brand:
-    WHERE id = :id:";
-
-  $status = $app->modelsManager->executeQuery($phql, [
-      'year' => $car->year,
-      'color' => $car->color,
-      'speed' => $car->speed,
-      'volume' => $car->volume,
-      'price' => $car->price,
-      'model' => $car->model,
-      'brand' => $car->brand,
-      'id' => $id
-  ]);
-
-  //Create response
-  $response = new Phalcon\Http\Response();
-
-  //Check if the insertion was successful
-  if (true == $status->success()) {
-    $response->setJsonContent(['status' => 'OK']);
-  } else {
-
-    //Change the HTML status
-    $response->setStatusCode(409, "Conflict");
-
-    $errors = [];
-    foreach ($status->getMessages() as $message) {
-      $errors[] = $message->getMessage();
-    }
-
-    $response->setJsonContent(['status' => 'ERROR', 'messages' => $errors]);
+  if(1 == count($users))
+  {
+    $hash = new Users;
+    $hash->setUser_hash(md5(uniqid(rand(), true )))->save();
   }
+  else
+  {
 
+    $response->setStatusCode(409, "Conflict");
+    $response->setJsonContent(
+      [
+        'status' => 'ERROR',
+        'messages' => 'Something wrong'
+      ]);
+  }
   return $response;
 });
 
@@ -195,8 +181,8 @@ $app->delete('/api/cars/{id:[0-9]+}', function ( $id ) use ( $app ) {
 
   $phql = "DELETE FROM Cars WHERE id = :id:";
   $status = $app->modelsManager->executeQuery($phql, [
-      'id' => $id
-  ]);
+    'id' => $id
+    ]);
 
   $response = new Phalcon\Http\Response();
 
