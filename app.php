@@ -56,7 +56,9 @@ $app->get('/api/cars/{id:(([0-9]+)+(\.(json|xml|txt|html))?)}', function ( $id )
 
   $cars = $app->modelsManager->executeQuery($phql, ['id' => $data[0]])->getFirst();
   $cars = [0 => (array) $cars = [
-    'model' => $cars->getModel(),
+    'id' => $cars->getId(),
+      'model' => $cars->getModel(),
+      'brand' => $cars->getBrand(),
       'year' => $cars->getYear(),
       'volume' => $cars->getVolume(),
       'color' => $cars->getColor(),
